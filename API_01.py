@@ -17,6 +17,7 @@ def main():
         except:
             raise requests.exceptions.HTTPError(decoded_response['error'])
 
+
 if __name__ == '__main__':
     main()
         
