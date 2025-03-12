@@ -1,14 +1,22 @@
 import requests
 
 
-url_template = 'https://wttr.in/{}?TnqmM&lang=ru'
-url_london = url_template.format("Лондон")
-url_sheremetyevo_airport = url_template.format("svo")
-url_cherepovets = url_template.format("Череповец")
-response_london = requests.get(url_london)
-response_sheremetyevo_airport = requests.get(url_sheremetyevo_airport)
-response_cherepovets = requests.get(url_cherepovets)
+def main():
+    locations = ["Лондон", "svo", "Череповец"]
+    params = {"TnqmM": "", "lang": "ru"}
+    url_template = "https://wttr.in/{}"
+    
+    for location in locations:
+        url = url_template.format(location)
+        response = requests.get(url, params)
+        response.raise_for_status()
+        decoder_response = response.text
+        try:
+            if not "error" in decoder_response:
+                print(response.text)
+        except:
+            raise requests.exceptions.HTTPError(decoded_response['error'])
 
-print(response_london.text)
-print(response_sheremetyevo_airport.text)
-print(response_cherepovets.text)
+if __name__ == '__main__':
+    main()
+        
