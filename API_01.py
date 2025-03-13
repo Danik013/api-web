@@ -9,14 +9,14 @@ def main():
     for location in locations:
         url = url_template.format(location)
         response = requests.get(url, params)
-        response.raise_for_status()
-        decoder_response = response.text
         try:
-            if not "error" in decoder_response:
+            response.raise_for_status()
+            if not "error" in response.text:
                 print(response.text)
-        except:
-            raise requests.exceptions.HTTPError(decoded_response['error'])
-
+            else:
+                raise requests.exceptions.HTTPError(response.text['error'])
+        except requests.exceptions.HTTPError:
+            print("Вы ввели неправильную ссылку или параметры!")
 
 if __name__ == '__main__':
     main()
