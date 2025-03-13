@@ -8,15 +8,16 @@ def main():
     
     for location in locations:
         url = url_template.format(location)
-        response = requests.get(url, params)
+        response = requests.get(url, params=params)
         try:
             response.raise_for_status()
-            if not "error" in response.text:
-                print(response.text)
-            else:
-                raise requests.exceptions.HTTPError(response.text['error'])
+            print(response.text)
         except requests.exceptions.HTTPError:
             print("Вы ввели неправильную ссылку или параметры!")
+        except requests.exceptions.ConnectionError:
+            print("Ошибка соединения при попытке получить данные.")
+        except requests.exceptions.Timeout:
+            print("Время ожидания истекло.")
 
 if __name__ == '__main__':
     main()
