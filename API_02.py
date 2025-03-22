@@ -5,36 +5,22 @@ from urllib.parse import urlparse
 
 
 def is_shorten_link(user_input, token):
-    parsed = urlparse(user_input)
-    pars_url = parsed.netloc
-    if "vk.cc" in pars_url:
-        shorten_url = user_input
-        cliks_url = count_clicks(token, shorten_url)
-        if cliks_url is not None:
-            print("Количество переходов:", cliks_url)
-    else:
-        base_url = user_input
-        shorten_url = shorten_link(token, base_url)
-        if shorten_url is not None:
-            print("Сокращенная ссылка: ", shorten_url)
- 
+    url_elements = urlparse(user_input)
+    domaine_name = url_elements.path
+    vk_stats = "https://api.vk.ru/method/utils.getLinkStats"
+    params = {
+        "access_token": token,
+        "v": 5.199,
+        "key": domaine_name.replace("/", "", 1)
+    }
+    response = requests.get(vk_stats, params=params)
+    response.raise_for_status()
+    keys_response = response.json()
+    return "response" in keys_response
+
 
 def shorten_link(token, base_url):
-    try:
-        base_url_response = requests.get(base_url)
-        base_url_response.raise_for_status()
-    except requests.exceptions.HTTPError:
-        print("Вы ввели неправильную ссылку или параметры!")
-        return None
-    except requests.exceptions.ConnectionError:
-        print("Ошибка соединения при попытке получить данные.")
-        return None
-    except requests.exceptions.Timeout:
-        print("Время ожидания истекло.")
-        return None
-    except requests.exceptions.MissingSchema:
-        print(f"Недопустимый URL-адрес. Возможно вы имели ввиду: https://{base_url}")
-        return None
+    base_url_response = requests.get(base_url)
     vk_url = "https://api.vk.ru/method/utils.getShortLink"
     params = {
         "access_token": token,
@@ -43,41 +29,52 @@ def shorten_link(token, base_url):
     }
     response = requests.get(vk_url, params=params)
     response.raise_for_status()
-    dict_response = response.json()
-    short_link = dict_response["response"]["short_url"]
+    keys_response = response.json()
+    short_link = keys_response["response"]["short_url"]
     return short_link
     
 
 def count_clicks(token, shorten_url):    
     shorten_url_response = requests.get(shorten_url)
     shorten_url_response.raise_for_status()
-    parsed = urlparse(shorten_url)
-    pars_url = parsed.path
-    key = pars_url.replace("/", "", 1)
+    url_elements = urlparse(shorten_url)
+    domaine_name = url_elements.path
     vk_stats = "https://api.vk.ru/method/utils.getLinkStats"
     params = {
         "access_token": token,
         "v": 5.199,
-        "key": key
+        "key": domaine_name.replace("/", "", 1)
     }
-    try:
-        response_stats = requests.get(vk_stats, params=params)
-        response_stats.raise_for_status()
-        dict_stats = response_stats.json()
-        clicks_count = dict_stats["response"]["stats"][0]["views"]
-    except IndexError:
-        print("Возможно ссылкой еще не пользовались!")
-        return None
+    response = requests.get(vk_stats, params=params)
+    response.raise_for_status()
+    keys_response = response.json()
+    clicks_count = keys_response["response"]["stats"][0]["views"]
     return clicks_count
 
 
 def main():
     load_dotenv()
-    token = os.getenv("SERVICE_KEY")
+    token = os.environ.get("VK_SERVICE_KEY", "KeyError: 'SOME_KEY'")
     user_input = input("Введите ссылку: ")
-    is_shorten_link(user_input, token)
-
+    if is_shorten_link(user_input, token):
+        try:
+            clicks_count = count_clicks(token, user_input)
+            print( "Количество переходов:", clicks_count)
+        except IndexError:
+            print("Возможно ссылкой еще не пользовались!")
+    else:
+        try:
+            shorten_url = shorten_link(token, user_input)
+            print("Сокращенная ссылка: ", shorten_url)
+        except requests.exceptions.HTTPError:
+            print("Вы ввели неправильную ссылку или параметры!")
+        except requests.exceptions.ConnectionError:
+            print("Ошибка соединения при попытке получить данные.")
+        except requests.exceptions.Timeout:
+            print("Время ожидания истекло.")
+        except requests.exceptions.MissingSchema:
+            print(f"Недопустимый URL-адрес. Возможно вы имели ввиду: https://{user_input}")
+    
 
 if __name__ == '__main__':
     main()
-
