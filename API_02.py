@@ -36,12 +36,12 @@ def shorten_link(token, base_url):
 
 def count_clicks(token, shorten_url):    
     url_elements = urlparse(shorten_url)
-    domaine_name = url_elements.path
+    path_url = url_elements.path
     vk_stats = "https://api.vk.ru/method/utils.getLinkStats"
     params = {
         "access_token": token,
         "v": 5.199,
-        "key": domaine_name.replace("/", "", 1)
+        "key": path_url.replace("/", "", 1)
     }
     response = requests.get(vk_stats, params=params)
     response.raise_for_status()
